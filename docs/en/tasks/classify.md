@@ -87,7 +87,10 @@ Train YOLO11n-cls on the MNIST160 dataset for 100 [epochs](https://www.ultralyti
 
     from ultralytics import YOLO
     from ultralytics.data.dataset import ClassificationDataset
-    from ultralytics.models.yolo.classify import ClassificationTrainer, ClassificationValidator
+    from ultralytics.models.yolo.classify import (
+        ClassificationTrainer,
+        ClassificationValidator,
+    )
 
 
     class CustomizedDataset(ClassificationDataset):
