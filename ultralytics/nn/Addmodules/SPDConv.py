@@ -1,6 +1,5 @@
 import torch
 import torch.nn as nn
-import math
 
 
 def autopad(k, p=None, d=1):
