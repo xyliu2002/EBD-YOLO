@@ -1,5 +1,4 @@
-from .SPDConv import *
-from .RepViT import *
 from .HGR import *
+from .RepViT import *
 from .RP import *
-
+from .SPDConv import *

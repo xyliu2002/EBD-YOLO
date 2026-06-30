@@ -1,6 +1,5 @@
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 
 
 def autopad(k, p=None, d=1):  # kernel, padding, dilation
@@ -34,7 +33,6 @@ class Conv(nn.Module):
 
 
 class GnConv(nn.Module):
-
     def __init__(self, dim, order=2, gflayer=None, h=14, w=8, s=1.0):
         super().__init__()
         self.order = order
@@ -53,9 +51,7 @@ class GnConv(nn.Module):
         kernel = kernel.view(1, 1, 3, 3).repeat(dim, 1, 1, 1)
         self.high_pass.weight = nn.Parameter(kernel, requires_grad=False)
 
-        self.pws = nn.ModuleList(
-            [nn.Conv2d(dim, dim, 1) for _ in range(order - 1)]
-        )
+        self.pws = nn.ModuleList([nn.Conv2d(dim, dim, 1) for _ in range(order - 1)])
 
         self.proj_out = nn.Conv2d(dim, dim, 1)
 
@@ -99,7 +95,6 @@ class PSABlock(nn.Module):
 
 
 class C2HGR(nn.Module):
-
     def __init__(self, c1, c2, n=1, e=0.5):
         super().__init__()
         assert c1 == c2
