@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+
 from ultralytics.nn.modules.block import C2f
 
 
@@ -16,7 +17,6 @@ def autopad(k, p=None, d=1):
 # 小目标注意力模块
 # =============================================================================
 class SmallObjectAttention(nn.Module):
-
     def __init__(self, channels, reduction=16):
         super().__init__()
         self.avg_pool = nn.AdaptiveAvgPool2d(1)
@@ -30,10 +30,7 @@ class SmallObjectAttention(nn.Module):
         )
 
         # 空间注意力 (保留高频细节，对小目标关键)
-        self.spatial = nn.Sequential(
-            nn.Conv2d(2, 1, kernel_size=3, padding=1, bias=False),
-            nn.Sigmoid()
-        )
+        self.spatial = nn.Sequential(nn.Conv2d(2, 1, kernel_size=3, padding=1, bias=False), nn.Sigmoid())
 
     def forward(self, x):
         # 通道注意力
@@ -54,38 +51,27 @@ class SmallObjectAttention(nn.Module):
 # 改进版 RFE_Block_S (Small Object Enhanced)
 # =============================================================================
 class RFE_Block_S(nn.Module):
-
     def __init__(self, c_in, c_out, s=1, use_attention=True):
         super().__init__()
         self.s = s
         self.use_attention = use_attention
 
         # 分支 1: 3x3 主干 (局部特征)
-        self.branch_3x3 = nn.Sequential(
-            nn.Conv2d(c_in, c_out, 3, s, 1, bias=False),
-            nn.BatchNorm2d(c_out)
-        )
+        self.branch_3x3 = nn.Sequential(nn.Conv2d(c_in, c_out, 3, s, 1, bias=False), nn.BatchNorm2d(c_out))
 
         # 分支 2: 1x1 辅助 (通道信息 + 定位修正)
-        self.branch_1x1 = nn.Sequential(
-            nn.Conv2d(c_in, c_out, 1, s, 0, bias=False),
-            nn.BatchNorm2d(c_out)
-        )
+        self.branch_1x1 = nn.Sequential(nn.Conv2d(c_in, c_out, 1, s, 0, bias=False), nn.BatchNorm2d(c_out))
 
         # 分支 3: 3x3 空洞卷积 (扩大感受野，对小目标关键!)
         self.branch_dilated = nn.Sequential(
-            nn.Conv2d(c_in, c_out, 3, s, padding=2, dilation=2, bias=False),
-            nn.BatchNorm2d(c_out)
+            nn.Conv2d(c_in, c_out, 3, s, padding=2, dilation=2, bias=False), nn.BatchNorm2d(c_out)
         )
 
         # 分支 4: Identity (特征保持)
         if s == 1 and c_in == c_out:
             self.branch_id = nn.BatchNorm2d(c_out)
         elif s == 2 and c_in == c_out:
-            self.branch_id = nn.Sequential(
-                nn.AvgPool2d(2, 2),
-                nn.BatchNorm2d(c_out)
-            )
+            self.branch_id = nn.Sequential(nn.AvgPool2d(2, 2), nn.BatchNorm2d(c_out))
         else:
             self.branch_id = None
 
@@ -101,11 +87,7 @@ class RFE_Block_S(nn.Module):
 
     def forward(self, x):
         # 收集各分支输出
-        branches = [
-            self.branch_3x3(x),
-            self.branch_1x1(x),
-            self.branch_dilated(x)
-        ]
+        branches = [self.branch_3x3(x), self.branch_1x1(x), self.branch_dilated(x)]
 
         if self.branch_id is not None:
             branches.append(self.branch_id(x))
@@ -125,23 +107,14 @@ class RFE_Block_S(nn.Module):
 # 高分辨率特征保持模块 (HRFP)
 # =============================================================================
 class HighResFeaturePreserve(nn.Module):
-
     def __init__(self, c_in, c_out, s=2):
         super().__init__()
 
         # 主路径: 标准下采样
-        self.main = nn.Sequential(
-            nn.Conv2d(c_in, c_out, 3, s, 1, bias=False),
-            nn.BatchNorm2d(c_out),
-            nn.SiLU()
-        )
+        self.main = nn.Sequential(nn.Conv2d(c_in, c_out, 3, s, 1, bias=False), nn.BatchNorm2d(c_out), nn.SiLU())
 
         # 辅助路径: 最大池化保留边缘 (小目标通常有较强边缘响应)
-        self.aux = nn.Sequential(
-            nn.MaxPool2d(s, s),
-            nn.Conv2d(c_in, c_out, 1, 1, 0, bias=False),
-            nn.BatchNorm2d(c_out)
-        )
+        self.aux = nn.Sequential(nn.MaxPool2d(s, s), nn.Conv2d(c_in, c_out, 1, 1, 0, bias=False), nn.BatchNorm2d(c_out))
 
         # 融合
         self.fuse = nn.Conv2d(c_out * 2, c_out, 1, 1, 0, bias=False)
@@ -156,7 +129,6 @@ class HighResFeaturePreserve(nn.Module):
 # 原子算子: RFEConv_S
 # =============================================================================
 class XConv(nn.Module):
-
     def __init__(self, c1, c2, k=3, s=1, act=True, use_attention=True):
         super().__init__()
         if s == 2:
@@ -173,7 +145,6 @@ class XConv(nn.Module):
 # 模块: RFE_Bottleneck_S
 # =============================================================================
 class RFE_Bottleneck_S(nn.Module):
-
     def __init__(self, c1, c2, shortcut=True, k=3, e=1.0):
         super().__init__()
         c_ = int(c2 * e)
@@ -210,7 +181,6 @@ class Conv(nn.Module):
 
 
 class Bottleneck(nn.Module):
-
     def __init__(self, c1, c2, shortcut=True, g=1, k=(3, 3), e=0.5):
         super().__init__()
         c_ = int(c2 * e)  # hidden channels
@@ -223,7 +193,6 @@ class Bottleneck(nn.Module):
 
 
 class C2f(nn.Module):
-
     def __init__(self, c1, c2, n=1, shortcut=False, g=1, e=0.5):
         super().__init__()
         self.c = int(c2 * e)  # hidden channels
@@ -243,7 +212,6 @@ class C2f(nn.Module):
 
 
 class C3(nn.Module):
-
     def __init__(self, c1, c2, n=1, shortcut=True, g=1, e=0.5):
         super().__init__()
         c_ = int(c2 * e)  # hidden channels
@@ -257,7 +225,6 @@ class C3(nn.Module):
 
 
 class C3k(C3):
-
     def __init__(self, c1, c2, n=1, shortcut=True, g=1, e=0.5, k=3):
         super().__init__(c1, c2, n, shortcut, g, e)
         c_ = int(c2 * e)  # hidden channels
@@ -271,4 +238,3 @@ class XC3k2(C2f):
         self.m = nn.ModuleList(
             C3k(self.c, self.c, 2, shortcut, g) if c3k else RFE_Bottleneck_S(self.c, self.c, False) for _ in range(n)
         )
-
