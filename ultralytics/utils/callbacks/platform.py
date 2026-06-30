@@ -6,7 +6,11 @@ from ultralytics.utils import RANK, SETTINGS
 def on_pretrain_routine_start(trainer):
     """Initialize and start console logging immediately at the very beginning."""
     if RANK in {-1, 0}:
-        from ultralytics.utils.logger import DEFAULT_LOG_PATH, ConsoleLogger, SystemLogger
+        from ultralytics.utils.logger import (
+            DEFAULT_LOG_PATH,
+            ConsoleLogger,
+            SystemLogger,
+        )
 
         trainer.system_logger = SystemLogger()
         trainer.console_logger = ConsoleLogger(DEFAULT_LOG_PATH)

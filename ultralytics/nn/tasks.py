@@ -9,7 +9,7 @@ from pathlib import Path
 
 import torch
 import torch.nn as nn
-from .Addmodules import *
+
 from ultralytics.nn.autobackend import check_class_names
 from ultralytics.nn.modules import (
     AIFI,
@@ -68,8 +68,6 @@ from ultralytics.nn.modules import (
     YOLOEDetect,
     YOLOESegment,
     v10Detect,
-
-
 )
 from ultralytics.utils import DEFAULT_CFG_DICT, LOGGER, YAML, colorstr, emojis
 from ultralytics.utils.checks import check_requirements, check_suffix, check_yaml
@@ -94,6 +92,8 @@ from ultralytics.utils.torch_utils import (
     smart_inference_mode,
     time_sync,
 )
+
+from .Addmodules import *
 
 
 class BaseModel(torch.nn.Module):
@@ -1561,7 +1561,6 @@ def parse_model(d, ch, verbose=True):
             RepConv,
             RPC3k2,
             RPConv,
-
         }
     )
     repeat_modules = frozenset(  # modules with 'repeat' arguments
@@ -1583,8 +1582,6 @@ def parse_model(d, ch, verbose=True):
             A2C2f,
             C3k2_RepViTBlock,
             RPC3k2,
-
-
         }
     )
     for i, (f, n, m, args) in enumerate(d["backbone"] + d["head"]):  # from, number, module, args
@@ -1637,7 +1634,6 @@ def parse_model(d, ch, verbose=True):
             c2 = args[1] if args[3] else args[1] * 4
         elif m is torch.nn.BatchNorm2d:
             args = [ch[f]]
-
 
         elif m is Concat:
             c2 = sum(ch[x] for x in f)
